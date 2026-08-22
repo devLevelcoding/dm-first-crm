@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// instagramUrl/instagramStatus/instagramDmAt ported from leadMarketing's
+// Lead — confirmed the real 4-value status enum (PENDING|DM_SENT|SKIPPED|
+// REPLIED) actually matches the schema comment there (unlike WhatsApp's,
+// which didn't). No Plan/Batch/quota concept exists for Instagram in the
+// source — confirmed flat, unscheduled, phase-6-only bolt-on there; this
+// product makes that flat pipeline the whole point instead of a side tab.
+model Lead {
+  id             Int       @id @default(autoincrement())
+  name           String
+  category       String?
+  city           String?
+  country        String?
+  website        String?
+  instagramUrl   String?
+  instagramStatus String   @default("PENDING")
+  instagramDmAt  DateTime?
+  createdAt      DateTime  @default(now())
+  deletedAt      DateTime?
+
+  @@map("leads")
+}
+
+// New — not in leadMarketing. Confirmed via research: leadMarketing has NO
+// DM message-copy builder at all (unlike WhatsApp's builders.ts/Warmup's
+// EmailTemplate) — a human composes the DM manually inside Instagram. A
+// "DM-native pipeline" product is more usable with at least a starting-point
+// template to personalize, so this fills that gap. `body` only (DMs have no
+// subject line, unlike email).
+model DmTemplate {
+  id        Int      @id @default(autoincrement())
+  name      String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("dm_templates")
+}
